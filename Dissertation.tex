@@ -116,23 +116,31 @@ The resulting data will be used to analyse the suitability of implementing compr
 		\end{itemize}
 
 \section{Literature Review}
-	\subsubsection{Data trasfer between nodes in a muti-node system}
-		\lipsum[2]
-		\cite{MantleAPI}
-		\cite{GpuPipeComp}
-		\cite{GpuTextComp}
-		
-		
+	\subsubsection{Data tWrasfer between nodes in a muti-node system}
+		Distributed systems are commonplace in solving large computation tasks.\\
+		Not just HPC - general networking, and single pc system\\
+		Time is money\\
+		Waiting on transfers is a waste of money and energy\\
+		Trade-off between adding more nodes verses fewer faster nodes, often super fast anyway\\
 	\subsubsection{Data Compression}
-	\lipsum[2]
-	\cite{GpuFP}
-	\cite{Patel12parallellossless}
-	\cite{Cederman08apractical}
+		Basic method of not sending data that doesn't need sending \\
+		Lossless is always needed expect in some circumstances\\
+		Hardware level compression is a thing\\
+		Sequential vs parallel\\
 	\subsubsection{Gpu Compression}
-	\lipsum[2]
+		Double vs Single precision \\
+		No Branching \\
+		Gpus can already compress iamges quickly\\
 	
-	\subsubsection{Multi-Gpu Data Transfer}
-	\lipsum[2]
+	\subsubsection{Gpu Data Transfer}
+		busy Cpu can cause slowdowns\\
+		Busy PCI device can cause slowdowns\\
+		Constant bandwidth, even with more devices\\
+		Hardware DMa\\
+		custom firmaware\\
+		Api abstraction\\
+
+\section{Test Framework}
 
 \newpage
 
