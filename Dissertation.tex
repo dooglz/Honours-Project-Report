@@ -1,16 +1,11 @@
-%You can delete all the comments after you have finished your document
-%this sets up the defaults for the documents, 12pt font and A4 size. The article type sets this up as such as opposed to letter or memo.
-
-%for the finer points LaTeX see https://en.wikibooks.org/wiki/LaTeX or http://tex.stackexchange.com/
-
 \documentclass[12pt,a4paper]{article}
 \usepackage{titlesec} %these are how we import packages, one helps set up footers and title layout
 \usepackage{fancyhdr}
-
+\usepackage{lipsum}
 % !TEX TS-program = pdflatex
 % !TEX encoding = UTF-8 Unicode
 \usepackage[utf8]{inputenc} % set input encoding (not needed with XeLaTeX)
-
+\usepackage[left=1.18in,top=0.95in,right=0.79in,bottom=0.79in]{geometry}
 \usepackage{graphicx} % support the \includegraphics command and options
 
 % \usepackage[parfill]{parskip} % Activate to begin paragraphs with an empty line rather than an indent
@@ -27,26 +22,27 @@
 %header and footer settings
 \pagestyle{fancyplain}
 \fancyhf{}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}} % set the \leftmark
 \renewcommand{\headrulewidth}{0.5pt}
 \renewcommand{\footrulewidth}{0.5pt}
 \setlength{\headheight}{15pt}
 \fancyhead[L]{Sam Serrels - 40082367}
 \fancyhead[R]{ SOC10101 Honours Project}
-\fancyfoot[L]{}
+\fancyfoot[L]{\leftmark}
 \fancyfoot[C]{\thepage}
 
 %set better section layout
 \makeatletter
 \renewcommand\subsection{\@startsection {subsection}{1}{2mm} % name, level, indent
-                               {3pt plus 2pt minus 1pt} % before skip
-                               {3pt plus 0pt} % after skip
-                               {\normalfont\bfseries}}
+                               {15pt} % before skip
+                               {8pt} % after skip
+                               {\fontsize{13pt}{1em}\bfseries}}
 \makeatother
 \makeatletter
 \renewcommand\section{\@startsection {section}{1}{0mm} % name, level, indent
-                               {4pt plus 2pt minus 1pt} % before skip
-                               {4pt plus 0pt} % after skip
-                               {\bfseries}}
+                               {0pt} % before skip
+                               {20pt} % after skip
+                               {\fontsize{14pt}{1em}\bfseries\newpage}}
 \makeatother
 
 
@@ -63,7 +59,8 @@
 
 %LaTeX let you define the abstract separately so it wont get sucked into the main document.
 \begin{abstract}
-% fill the abstract in here
+This project aims to research the viability of compressing data on a Graphics Processing Unit(GPU) before sending it to another GPU to reduce the transfer time and bandwidth utilisation.
+The resulting data will be used to analyse the suitability of implementing compression methods into existing GPU workloads, such as real-time rendering, or distributed general purpose computation.
 \end{abstract}
 \pagebreak
 
@@ -79,57 +76,69 @@
 %these are done for you as long as you use \begin{figure}[placement settings] .. bla bla ... \end{figure}
 \newpage
 
-\section*{Acknowledgements}
-Insert acknowledgements here
-\subsection*{}
-	I would like to thank my cat, dog and family.
+%\section*{Acknowledgements}
+%Insert acknowledgements here
+%\subsection*{}
+%	I would like to thank my cat, dog and family.
+%\newpage
+
+\section{Introduction}
+	\subsection{Aims and Objectives}
+		\lipsum[5]
+	\subsection{Research Questions}
+		\lipsum[8]
+	\subsection{Scope}
+		\lipsum[7]
+	\subsection{Report Structure}
+		\lipsum[6]
+		
+\section{Background}
+	\lipsum[2]
+	\subsection{Parralel alogrithms}
+		\lipsum[3]
+	\subsection{Graphics Processing Units}
+		\lipsum[4]
+	\subsection{GPGPU APIs}
+		\lipsum[2]
+	\subsubsection{OpenCl}
+		\lipsum[2]
+	\subsubsection{Cuda}
+		\lipsum[2]
+	\subsection{Data Transfer bottlenecks}
+		\lipsum[3]
+	\subsection{Data Compression}
+		This is a sub sub section with a list of bullet points.
+		\begin{itemize}\itemsep0pt
+			\item A working X, that will be used for this investigation.
+			\item Investigation of current tools and their potential use during an investigation of X .
+			\item Programming of X with related frameworks Y and Z.
+			\item That is all.
+		\end{itemize}
+
+\section{Literature Review}
+	\subsubsection{Data trasfer between nodes in a muti-node system}
+		\lipsum[2]
+		\cite{MantleAPI}
+		\cite{GpuPipeComp}
+		\cite{GpuTextComp}
+		
+		
+	\subsubsection{Data Compression}
+	\lipsum[2]
+	\cite{GpuFP}
+	\cite{Patel12parallellossless}
+	\cite{Cederman08apractical}
+	\subsubsection{Gpu Compression}
+	\lipsum[2]
+	
+	\subsubsection{Multi-Gpu Data Transfer}
+	\lipsum[2]
+
 \newpage
 
+\bibliographystyle{plain}
+\bibliography{Dissertation}
 
-\section{Title of section would go here}
-You can fill out sections as you please. \\ %adds a line brake
-
-Most of the formatting is taken care for you but you can add this yourself as you please.
-
-\subsection{Title of subsection would go here}
-Or have sections that are relevant to your main body of work above but warrant there own section. Both - with numbering would be entered into the Table of contents.
-
-
- \subsubsection{Overview Of Project Content and Milestones}
-
-This is a sub sub section with a list of bullet points.
-\begin{itemize}\itemsep0pt
-	\item A working X, that will be used for this investigation.
-	\item Investigation of current tools and their potential use during an investigation of X .
-	\item Programming of X with related frameworks Y and Z.
-	\item That is all.
-\end{itemize}
-
-
-\section{Chapter 2}
-And so on for each of the chapters.  The template automatically starts new chapters on a new page.  The associated guidelines tell you what the available styles do and also how to structure a report.
-There is a section break on this page that you should be careful NOT to delete otherwise the references and appendices will be numbered continuously with the rest of the document.
-
-% another example section
-\section{Additional Information / Knowledge Required}
-Experience with Linux and managing Virtual machines, networking.
-So on and so forth...
-
-\newpage
-\begin{thebibliography}{9}
-
-\bibitem{lamport94}
-  Leslie Lamport,
-  \emph{\LaTeX: A Document Preparation System}.
-  Addison Wesley, Massachusetts,
-  2nd Edition,
-  1994.
-
-\end{thebibliography}
-%example of References. See https://en.wikibooks.org/wiki/LaTeX/Bibliography_Management
-%might be good to use a separate document for these so your main work is not one really long text file. 
-
-%you can crate this on a extra tex document just like the title or any other part of the document.
 \newpage
 \begin{appendices}
 \section{Project Overview}
