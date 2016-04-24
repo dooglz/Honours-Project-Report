@@ -7,9 +7,10 @@
 \usepackage[utf8]{inputenc} % set input encoding (not needed with XeLaTeX)
 \usepackage[left=1.18in,top=0.95in,right=0.79in,bottom=0.79in]{geometry}
 \usepackage{graphicx} % support the \includegraphics command and options
+\usepackage{csquotes}
 
-% \usepackage[parfill]{parskip} % Activate to begin paragraphs with an empty line rather than an indent
-
+\usepackage[parfill]{parskip} % Activate to begin paragraphs with an empty line rather than an indent
+\newcommand{\ra}[1]{\renewcommand{\arraystretch}{#1}}
 %%% PACKAGES
 \usepackage{booktabs} % for much better looking tables
 \usepackage{array} % for better arrays (eg matrices) in maths
@@ -30,6 +31,33 @@
 \fancyhead[R]{ SOC10101 Honours Project}
 \fancyfoot[L]{\leftmark}
 \fancyfoot[C]{\thepage}
+\graphicspath{{./images/}}
+
+\newcommand{\figuremacroW}[4]{
+	\begin{figure}[h] %[htbp]
+		\centering
+		\includegraphics[width=#4\columnwidth]{#1}
+		\caption[#2]{\textbf{#2} - #3}
+		\label{fig:#1}
+	\end{figure}
+}
+\newcommand{\figuremacroWH}[4]{
+	\begin{figure}[h!] %[htbp]
+		\centering
+		\includegraphics[width=#4\columnwidth]{#1}
+		\caption[#2]{\textbf{#2} - #3}
+		\label{fig:#1}
+	\end{figure}
+}
+
+\newcommand{\figuremacroF}[4]{
+	\begin{figure*}[t] % [htbp]
+		\centering
+		\includegraphics[width=#4\textwidth]{#1}
+		\caption[#2]{\textbf{#2} - #3}
+		\label{fig:#1}
+	\end{figure*}
+}
 
 %set better section layout
 \makeatletter
@@ -79,9 +107,11 @@ The resulting data will be used to analyse the suitability of implementing compr
 \section*{Acknowledgements}
 This dissertation would not have been possible without the help of the following great people:
 \\\\
-Dr Kevin Chalmers, for supervising this project and always providing the best of advice.\\
-Felix Jarvis, for letting me take apart his computers, and then fixing them.\\
-The Games Lab Family, for being the best and least-productive group of friends and colleagues I have ever known.\\
+Dr Kevin Chalmers, for supervising this project and always providing the best of advice.\\\\
+Felix Jarvis, for letting me take apart his computers, and then fixing them.\\\\
+Hugh Tennent, for inspiration and his great work in 1885.\\\\
+William McEwan, for his exploits in 1856.\\\\
+The Games Lab Family, for being the best and least-productive group of friends and colleagues I have ever known.
 
 \newpage
 
@@ -133,7 +163,7 @@ Data compression is vast and well established field of research, this project is
 This project requires access to compatible hardware, i.e two modern identical GPUS, as vendor support for the OpenCL standard varies, a complete scientific approach would be to acquire a large matrix of GPUs for results, this was not possible for this project.
 	
 \subsection{Report Structure}
-	\lipsum[6]
+	TODO
 		
 \section{Background}
 \subsection{Graphics Processing Units}
@@ -280,8 +310,176 @@ For quickly repeating tests and gathering results for multiple parameters, the f
 \subsubsection{Result Visualization and Comparison}
 With a framework for gathering results, a tool was needed to be able to compare tests against each other to spot both large differences between transmission methods and small differences as parameters are tweaked when optimising an individual method. This too would need to be able to read and understand the different sets of results that the framework would generate. Idieally this would also be connected to the automation of the framework so that results would be collected and visualised automatically.
 
+\subsubsection{Hardware}
+This project was able to make use of three separate hardware setups for deploying and testing, along with a few other auxiliary systems for testing and secondary tasks.
+
+\begin{table*}[h]\centering
+\begin{tabular}{p{0.8cm}lll}\toprule
+ & Tesla Server & Lab Pc & Home Pc \\ \midrule
+\textbf{OS} & CentOS & Windows 7 & Windows 10\\
+\textbf{GPU} & 2x Tesla K40 & 2x GTX980 & AMD R9290, 2x AMD 5770\\
+\textbf{CPU} & Intel i7-4770K @ 3.5GHz & Intel i7-4790K @ 4.0GHz & AMD FX8320 @ 4.0GHz \\
+\bottomrule
+	\end{tabular}
+	\caption{Implementation Hardware}
+\end{table*}
+
+\begin{table*}[h]\centering
+	\begin{tabular}{p{0.8cm}p{4.5cm}p{4.7cm}p{4.8cm}}\toprule
+		& Testing PC 1 & Testing PC 2 & Build Serve \\ \midrule
+		\textbf{OS} & Ubuntu Desktop & Ubuntu Desktop & Ubuntu server\\
+		\textbf{GPU} & 2x GTX970 & AMD R9 390 & N/A (openCL on CPU)\\
+		\textbf{CPU} & AMD FX8350 @ 4.2GHz &AMD Phenom X4 995 @ 3.0 GHz & Virtualized CPU, 2 cores @ 4GHz \\
+		\bottomrule
+	\end{tabular}
+	\caption{Other Hardware}
+\end{table*}
+
+\subsection{Test Framework}
+\subsubsection{Introduction}
+The application took the form of a command line application, navigated by a simple menu system to select options and input parameters, having live visualisations and graphical interface components was considered but was ultimately out of scope for this project.
+The program could be completely operated via command line arguments to allow for easy automation and repeating tests.
+
+\subsubsection{Portable Build and Deployment Considerations}
+
+\paragraph{CMake}
+To allow for simultaneous deployments on both Linux and Windows platforms, the CMake build tool was utilised. CMake was used to generate either the Visual Studio Solution file or the GCC makefile from the source code. CMake also allowed for additional pre-build logic to be run to analyse the system capabilities.
+ 
+\paragraph{Jenkins Build Server}
+An external build server running the Jenkins Constant Integration software was created. When code was pushed to the version control host (GitHub), this would trigger a build with Jenkins. Jenkins would pull the code to the server and compile it, it would send a notification in the event of a build failure and would also log any errors. Static analysis tools (CppCheck) were also used on the code and logged in conjunction with the compiler output to maintain a high code standard. The build server had the ability to run OpenCL on its CPU via the Intel driver, this allowed for additional tests to spot memory issues with the Valgrind tool, this took a long time however so as the project transitioned to Cuda this activity was phased out.
+
+The build server had access to the Tesla server and would run a remote agent to ensure the code compiled without issue on both systems. As the linux ecosystem has many different compiler and library versions, running the build on two different distribution flagged up a surprising amount of bugs.
+
+Jenkins could also run any tests within the application after a successful build. This would have provided a large historical set of data as the application was developed, however this was found that it was not actually needed.
+
+
+
+\subsubsection{System Capability Testing}
+The pre-build process was designed to inspect the capabilities of a system and determine what APIs were available and their current versions, this information was passed onto the compiler to make sure that the program could be linked with the APIs correctly. This information was also made available to the application if it required it.
+\paragraph{OpenCL}
+Determining if a system has OpenCl drivers installed is a complex and convoluted task, after much research it was found that there is no accepted good technique. The task of ensuring OpenCL is installed, up to date, and compatible with an application is the responsibility of the user rather than the developer, as ultimately the developer may not have knowledge of the systems a given application will run on. This follows the ethos of OpenCL, in that it should run everywhere without modification, in reality this does not work well due to driver differences, and the fact that a system can have multiple OpenCL drivers installed simultaneously. In this situation, different “platforms” are exposed to the application to chose first before it can chose any devices.  Devices cannot be combined with devices from different platforms. This can work well, but an application must be linked with only a single OpenCL library, therefore on a system with multiple openCL libraries, one must be found and chosen.
+
+An OpenCL library should look for and make available any other OpenCL platform on a system once the application is running, so it should not matter which library is chosen, however it was found that some libraries did not do this (Nvida+AMD on Linux, Nvidia on Windows 7). This raises the question that if the Nvidia Library is used to compile the application, then the application is moved to a different computer with no Nvidia hardware, would it still work? This is behavior that OpenCL specification has solutions for, and it seems that the newer the driver and library used, the less common these problems are, so this may be a case of bugs that already solved are or will soon be solved.
+
+The method chosen by this implementation was to create a custom CMake module to search in known paths for versions of OpenCL. When a version was found, the header file was inspected to find the version of the library. After the search was completed the library that supported the newest version of OpenCL was chosen for linking with the application.
+\paragraph{Cuda}
+Cuda is only supported on Nvidia hardware, and while different versions of the Cuda SDK can be installed, finding the newest version to link with is a trivial task. This task was included in the same CMake module that searches for OpenCL. 
+
+\paragraph{Hardware Capabilities}
+After choosing an OpenCL or Cuda SDK to link with to compile the program, there may still be incompatibilities if the actual hardware does not support all the features supported by the driver. Both APIs have methods to handle this, thankfully this is much easier when compared to the Graphics APIs, as the hardware will supply the highest version number of an API that it supports and this can be used to identify what can and can’t be done on the hardware.
+With compatible features identified, the amount of cores, warp size, and memory capacity still need to be queried to make sure a given test can run on the GPU. This project used the newest and the best GPUS available to make sure this was not a problem.
+
+\subsubsection{Result Capture and Visualisation}
+\paragraph{Timing Features}
+The framework made use of the C++ Standard Chrono Library for timing. Cuda provides a more precise timing method which was used where applicable. Timers could be started and stopped and then automatically added to a results set. The framework would run tests multiple times (default of 100) to get an accurate reading for each time. The times would be averaged and saved along with the raw timing for each run to a CSV file after a test had finished.
+
+A single run of a test may have many separate steps that need to be timed separately, the framework supported this by providing a test the ability to create and name sets of timers. The saved final file would have the times for each run for each set of test steps. 
+
+\paragraph{Test Step Visualisation}
+Visualising an entire algorithm comprised of many steps required creating a new tool to show an overview of a test compared with another. The objective was to have the ability to compare individual steps of an algorithm rather than just the summed run time. This was implemented as a web app in JavaScript using the D3.js visualization framework. Result CSV could be uploaded to the site and would be added to the list of results to view, this was scripted to happen automatically on the Tesla server.
+A limitation of the tool is that it can not display two result sets if they have a different number of steps, different solutions to visualize this were tried but ultimately it always resulted in an unclear display. 
+
+\subsection{Inter-Gpu Communication}
+\blockquote[\cite{amdoclguide}]{Discrete GPUs use dedicated high-bandwidth memory that exists in a separate address space. Moving data between the device address space and the host requires time-consuming transfers over a relatively slow PCI-Express bus.
+}
+
+\subsubsection{OpenCL}
+OpenCL was chosen as the first technology to be analysed, this was due to OpenCL’s wide range of support platforms and therefore any advances made would have the greatest area for application. The address space of the GPU is not directly or even indirectly accessible from the application on the CPU.
+The application can create “buffers” to store data, GPU kernels can access the data in these buffers when executing, so they must be copied to the GPU. The application has no control over this (with one exception, explained later), it is completely up to the driver to identify when data would be needed on a gpu and initiate the copy.
+\blockquote[\cite{amdoclguide}]{An OpenCL context can have multiple devices, and a memory object that is located on a device has a location on each device. To avoid over-allocating device memory for memory objects that are never used on that device, space is not allocated until first used on a device-by-device basis. For this reason, the first use of a memory object after it is created can be slower than subsequent uses
+}
+Optimisations can be done to ensure the copy is as fast as possible, by using “Pinned Memory” which is memory that is guaranteed to be in a static contiguous location within Main Memory. This allows the GPU to use a DMA transfer to quickly receive or transmit data to the CPU. However this is only a speed optimisation, the application still has no control over when the transfer will happen.
+
+To transfer data from one GPU to another, they must write to and read from the same buffer. OpenCL does not provide low level cross-device/cross-queue synchronization barriers, so the application must use the GlFinish command to ensure a gpu has finished writing. This command has a significant overhead as it blocks the cpu until all current tasks on the GPU are finished, this means the cpu will be waiting for synchronization and cleanup operations to happen in addition to the kernel operations. 
+
+Once the application can be sure a GPU has finished writing to a buffer, it can then execute the kernels on the second GPU to read the data. Without even considering transferring data from card A to card B, the operation procedure to synchronize reading and writing has already taken a significant amount of time. 
+
+\paragraph{clEnqueueMigrateMemObjects}
+
+As previously mentioned, there is no way to explicitly move a buffer from one GPU to another, or even move a buffer anywhere at all, as the placement of buffers is completely up to the driver. There exists an API function call named “clEnqueueMigrateMemObjects”, which allows the application to express that it wishes a buffer to be associated with a specific device. Theoretically this should provided enough of  a hint to the driver that it will initiate a transfer, however this is still only a hint and the OpenCL spec does not guarantee that a transfer will occur.
+
+It was found that this function either provided no perceived speedup, or would actually crash the application in some specific combinations of hardware and software. There exists an AMD OpenCL extension to allow for direct GPU-GPU communication, but this is only available on the workstation FirePro GPU systems which could not be sourced for this project.
+
+Although it was not proven scientifically, it is speculated that when the driver does schedule a transfer of data between GPUs, this transfer is routed through the CPU and possibly Main Memory rather than through the SLI or Crossfire Bridge. This could depend on the driver and hardware used, but it was observed in both AMD and Nvidia setups where the card bridge could be used, the transfer times strongly suggest they are not utilised.
+
+\subsubsection{Cuda}
+As Cuda is a technology that only operates on Nvidia hardware, it can afford to provide functionality that operates on a lower lever when compared to what OpenCL can offer. There is no concept of abstract buffers in Cuda, the application is in charge of allocated memory on the GPU and transferring data to and from it. The application cannot access the GPU memory directly, this must be done with Cuda functions, data is written and through “MemCopy” operations, the CPU cannot use direct pointers to GPU memory. Pinned memory is also provided in cuda, this can be written to from the CPU and quickly (compared to non pinned memory) accessed by the GPU.
+
+\paragraph{Streams}
+Cuda allows for queuing GPU commands into a “stream”, tasks in a stream will not execute until the previous task has completed, this synchronization occurs within the driver or on the GPU, not within the application. Data transfers can be queued after kernel completion to copy the data as soon as it is ready, the application will wait until the stream has finished rather than each task within it. Multiple streams can exist, however they must be associated with a single GPU for maximum performance. Synchronization barriers can be placed inside streams to synchronize across multiple streams, this means that GPU 2 could wait on GPU 1 to finish a job and then copy the from the card as soon as possible. This is a huge improvement over the abilities in OpenCL and this is main reason why Cuda was chosen as the API for the remainder of the project.
+
+\paragraph{Peer to Peer}
+Nvidia provide a method of copying data between GPUs directly over PCIe without routing through Main Memory, this is known as Peer to Peer (P2P) access. This is only supported on certain hardware and drivers versions. This is substantially faster than normal data transfers. However CPU synchronization is still needed at the start and end of the transfer.
+
+\paragraph{Unified Virtual Addressing}
+On high-end Tesla compute cards, Unified Virtual Addressing (UVA) technology is available.  This merges the address space of the any GPUs and the CPU together. This is primarily an ease-of use feature as it can simplify and reduce code, Kernels can reference data on other devices and memory operations can move data around without doing as much address mathematics. This is mainly used for sharing data between the GPU and CPU, but when coupled with two GPUS and P2P operations it can give a small but noticeable increase in throughput. Using P2P memory copies with UVA was determined the fastest method of moving data from one card to another. Multiple copy operations can be executed at once vai streams, but it is not clear if these actually execute in parallel, are interleaved, or execute in sequence.
+
+\subsubsection{DirectX 12}
+The ability to use DirectX 12 became available midway through the project. DX12 has the ability to dispatch commands and data to specific GPUS. The major issue with Using DX12 at this time was that the drivers and documentation was still in a very early state. A working implementation that moved data from one GPU to another was implemented, however the results were not nearly as good as using Cuda. 
+As DX12 is a full graphics API, integrating the data transfer into a games/graphics pipeline would be much simpler than with Cuda or OpenCL. As driver support and performance improves over time this method may become viable to integrate into a product, at the moment it only serves as a proof of concept that multi-GPU transfers can be done.
+
+
+\subsection{Gpu Compression}
+Any compression algorithm that runs on the GPU must be a highly parallel in nature, this is a hard task as compression in a data intensive operation that requires accessing data from the entire file at somewhat random times. If the data is split and compressed in chunks, the total compression ratio will always be less than an algorithm that can run across an entire file. Furthermore, joining the compressed chunks together is an operation that requires communication between each of the compressing elements, essentially a parallel reduction operation. This can be done completely with GPU kernels, but the data quantity involved makes this a slow process. It could be possible to skip the join stage and pass the data as junks to another GPU, which would get the data off the compressing GPU quickly. The data would still have to be combined by the receiving GPU which would also need extra metadata to do so, which increases the overall data transfer quantity. 
+
+
+\subsubsection{Bit Reducer}
+To discover generic compression issues/bottlenecks and to get a baseline performance reading, a basic compression algorithm was created. The algorithm interprets data as 32bit integers and swaps swaps any leading zeroes in the binary representation with a 5 bit number representing the amount of bit removed.
+This was designed to make the best use of the parallelism of the GPU, as the data can be easily segmented into chunks of 32 bits, and each chunk can be processed independently. The difficult task is recombining the compressed chunks together as each chunk will be a separate size. This was managed by placing the size of the chunk into a shared memory location, creating a contiguous list of all chunk sizes. A single kernel will then read this list and compact the chunks together. Decompressing the data does not play to the strengths of a GPU as well as compressing, the input data has to be divided into individual chunks, this required reading sequentially through the data to pick out the size bits and data bits. Splitting the data randomly would not work as there is no way to tell a size bit from the data bits. This was remedied by adding additional data to the start of the entire data set, this contained the boundaries of a set of chunks within the output data. This data allowed the data to be divided correctly. This works well if the the compressing and decompressing gpus have the same amount of compute units and warp sizes and results in essentially a perfect reverse of the compression process with the cost of a few extra bytes of data.
+
+\begin{table*}[h]\centering
+	\begin{tabular}{ll}\toprule
+			Input data & 2,4,6,8,0,1\\
+			Input Size & 6x32 = 192 Bits\\
+			Chunks & {4,5,6},{8,0,1}\\
+			Binary Encoding & {100,101,110},{1000,0,1}\\
+			Size Bits & {3,3,3},{5,1,1}\\
+			Size Bits Binary & {11,11,11},{101,1,1}\\
+			Finished chunks & {111001110111110},{10110001011}\\
+			Chunk Sizes & {15,11}\\
+			Chunk Sizes Binary  & {10101,10001}\\
+			Final Binary data  & 10101,10001,111001110111110,10110001011\\
+			Final Size & 36 Bits\\
+			Final Ratio & 0.1875\\
+			\bottomrule
+	\end{tabular}
+	\caption{Bit Reducer Example Steps}
+\end{table*}
+
+\subsubsection{GFC}
+\blockquote[\cite{GpuFP}]{The GFC algorithm is a novel lossless compression algorithm for double-precision floating-point data targeted for parallel execution on a GPU.}
+
+GFC is a GPU compression algorithm with that achieves high compression ratios with high throughput compared to any other published work. The paper which describes the algorithm claims a total compression throughput of 75 Gb/s. this was chosen as a test case for GPU compression as primarily for the results and speeds that it provides, if this algorithm was found to not be fast enough (to gain speedup over raw transmission) then the chances of any algorithm working would be slim.
+
+The GFC Algorithm works in a similar fashion to the much simpler Bit Reducer in that the data is split into blocks and processed independently, then combined with metadata containing block information. GFC also includes Bit-Reduction code to remove unnecessary 0 padding.
+The primary method used by GFC when processing blocks is to use the assumption that consecutive data will be of similar magnitude. A number is assumed to be the same as the previous number, and then the error is recorded, if they are infact the exact same, the data needing stored will be minimal. In a worst case scenario where a number is the maximum int range from the predicted number, then the data to be stored will be the same size as the number with a few extra info bits. 
+
+\blockquote[\cite{GpuFP}]{In the best case where all values are correctly predicted, the 32 64-bit values in a subchunk are compressed down to 16 bytes, resulting in an upper bound of 16 for the compression ratio. In the worst case where all residuals have eight non-zero bytes, the “compressed” output is 16 bytes larger per subchunk than the uncompressed input, resulting in a compression ratio of 0.94, i.e., an expansion by 6\%.}
+
+GFC was designed for high compression throughput, and although the process could be reversed for decompression on the GPU, the use case for this algorithm was to get large amounts of data off of the GPU quickly and then it can be sent elsewhere i.e., over a network. It was found in this investigation that a high compression ratio and overall processing times are in the realm of the results described in the paper, however the compressed data is not in a format that can be easily transferred to and decoded by a decompressing GPU with some intermediary CPU work.
+
+
+\subsubsection{Lossy Image Compression}
+Video games use lossy compressed textures for rendering anywhere it is possible to do so, the speed benefits and memory savings make it an obvious choice. The degradation in individual texture quality is seen to be worth sacrificing for an increase in overall image diversity. In some cases (primarily old DirectX 8 era games), compression can increase image quality as game artists would have to downsample uncompressed textures to maintain a playable framerate. Compression can keep the low file size and also details in textures that would have to be cut to save space without compression. This has been the accepted practise for so long that Hardware and APIs have dedicated functions to enable image compression. This was looked at to see if the existing API functionality and hardware encoders could be used to compress and decompress procedural image data before transferring to another GPU.
+
+S3TC 
+S3 Texture Compression (S3TC) (commonly referred to as DXT after the integration into DirectX) is a set of lossy image compression algorithms designed for video games. The technique was first published by S3 Graphics Co for use in their Savage 3D GPU \cite{hong2004fixed} .
+
+\blockquote[\cite{anddxt}]{S3 Texture Compression is a lossy, fixed-rate, texture compression format. This style of compression makes S3TC an ideal texture compression format for textures used in hardware-accelerated 3D computer graphics. Following the integration of S3TC with Microsoft’s DirectX* 6.0 and OpenGL 1.3, the compression format became much more widespread.}
+
+The compression works by dividing an image into blocks of 4x4 pixels, these segments are compressed independently of all other segments, allowing for easy parallelism. The compression on the blocks involves finding two colours where every pixel in the block can fit on or close to a linear scale between the two colours. Then every pixel is rounded to the closest value on the linear scale.
+This works perfectly for blocks that are comprised of only shades of a single colour, if two or more colours with separate hues are present in a block, artifacts can occur. At a scale of 4x4 pixels, each block is relatively small and should not contain much image detail before compression, so artifacts should not be noticeable for large textures. There is a set of different versions of S3TC (DXT1, DXT3, DXT5 ), the difference being the amount of bits used and how alpha channels are handled, there is no fundamental difference to the algorithm for each version.
+
+S3TC decoding has been built into the hardware design of GPUs for some time, it has also been integrated into the graphics APIS ( still technically an extension in OpenGL) for around a decade. All game engines compress games texture during some art pipeline stage before the assets get into the game. Hardware support means that the compressed texture can be used in game code as if they were uncompressed without any additional code, the GPU manufactures can also tune the decoding algorithm to best fit the GPU hardware. 
+
+	\figuremacroF
+	{dxt}
+	{S3TC, Single block}
+	{Left: Original, Right: Compressed \cite{dxtimg}}
+	{0.5}
 
 \bibliographystyle{plain}
+%\bibliographystyle{apalike}
 \bibliography{Dissertation}
 
 \newpage
