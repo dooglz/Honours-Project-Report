@@ -462,7 +462,7 @@ GFC was designed for high compression throughput, and although the process could
 \subsubsection{Lossy Image Compression}
 Video games use lossy compressed textures for rendering anywhere it is possible to do so, the speed benefits and memory savings make it an obvious choice. The degradation in individual texture quality is seen to be worth sacrificing for an increase in overall image diversity. In some cases (primarily old DirectX 8 era games), compression can increase image quality as game artists would have to downsample uncompressed textures to maintain a playable framerate. Compression can keep the low file size and also details in textures that would have to be cut to save space without compression. This has been the accepted practise for so long that Hardware and APIs have dedicated functions to enable image compression. This was looked at to see if the existing API functionality and hardware encoders could be used to compress and decompress procedural image data before transferring to another GPU.
 
-S3TC 
+\paragraph{S3TC}
 S3 Texture Compression (S3TC) (commonly referred to as DXT after the integration into DirectX) is a set of lossy image compression algorithms designed for video games. The technique was first published by S3 Graphics Co for use in their Savage 3D GPU \cite{hong2004fixed} .
 
 \blockquote[\cite{anddxt}]{S3 Texture Compression is a lossy, fixed-rate, texture compression format. This style of compression makes S3TC an ideal texture compression format for textures used in hardware-accelerated 3D computer graphics. Following the integration of S3TC with Microsoft’s DirectX* 6.0 and OpenGL 1.3, the compression format became much more widespread.}
@@ -477,6 +477,99 @@ S3TC decoding has been built into the hardware design of GPUs for some time, it 
 	{S3TC, Single block}
 	{Left: Original, Right: Compressed \cite{dxtimg}}
 	{0.5}
+	
+\paragraph{ATSC}
+Adaptive Scalable Texture Compression (ATSC), is a newer compression format that combines many of the optimizations discovered by prior compression formats together to form a compression technique that provides much greater perceptive quality while remaining a small file size and fast GPU decompression. ATSC uses a block based approach, highly similar to S3TC, however the blocks do not need to be square. Each block is still a fixed size, so splitting the data for decompression is trivial. The main advances in ATSC is how the bits are allocated within each block. The allocation can be shifted depending on the contents of the block, for a block with similar colours, more data can be allocated to each pixel. For a block with multiple colours, more data can be allocated to the metadata and colour scale. With relatively small amount of bits to work with, changing the allocation would result in large changes i.e., an extra bit for each pixel would significantly reduce the remaining space for block metadata. ATSC makes use of Bounded Integer Sequence Encoding to get around this problem and gain finer control over bit allocation. BISE leverages the spare bits available of the maximum number in a range and uses this to quantise the data down to a smaller size using higher base number systems (base 3 and 5). Essentially this can the effect of allowing fractional bits for each pixel.
+
+
+\blockquote[\cite{astsinfo}]{[BISE has] a significant saving, and has the somewhat weird property of assigning a non-integer number of bits - 2.33 - to each value[pixel].}
+
+ATSC has hardware support in virtually all modern Desktop and laptop GPUS, and in most common mobile GPUs, it is expected to become the default compression standard due to the image quality it produces. It does take significantly more instructions to decode vs S3TC, but S3TC was designed for 1990’s GPUS, with the extra processing power available to modern day GPUS, ATSC can be decoded at more than acceptable speeds. 
+
+\paragraph{Encoding and Decoding S3TC and ATSC}
+Using these standard formats for this project seemed like an obvious choice, however it was found that compressed textures are designed to be used a certain way, and using it for the use of this project was unfortunately not feasible.
+GPUs can decode Compressed texture formats quickly, and transferring the compressed data from one card to another would not be any more complex than moving any other data. The issue that was discovered was the encoding stage. The accepted use scenario for video games is that the texture are compressed on the CPU before being sent to the GPU. This can be done at run time, using API calls (for some formats only), or by using an offline tool. The offline tools are designed to get the best image quality in the smallest file size. Time to encode is not a priority as these tools are only designed to be run once, then the compressed images are saved to disk along with other game files to be loaded at run time.
+While these algorithms in theory should be well suited to GPU architecture for encoding, this is a task that has not been commonly attempted. This project ran into difficulties getting an S3TC compressor working in CUDA, and  unfortunately this feature set had to be cut from the final results. 
+
+\section{Results}
+	\figuremacroWH
+	{BitCompressRatio}
+	{BitCompressRatio}
+	{}
+	{1.0}
+
+	
+	\figuremacroWH
+	{BitCompressTime}
+	{BitCompressTime}
+	{}
+	{1.0}
+	
+	\figuremacroWH
+	{CUDADataTransfer}
+	{CUDADataTransfer}
+	{}
+	{1.0}
+	
+	\figuremacroWH
+	{cudagpusort}
+	{cudagpusort}
+	{}
+	{1.0}
+	
+	\figuremacroWH
+	{DataTransferCudaUVAVSOpenCL}
+	{DataTransferCudaUVAVSOpenCL}
+	{}
+	{1.0}
+	
+	\figuremacroWH
+	{GFCcompressionRatio}
+	{GFCcompressionRatio}
+	{}
+	{1.0}
+	
+	\figuremacroWH
+	{GFCCompressionSpeedupvsDataSize}
+	{GFCCompressionSpeedupvsDataSize}
+	{}
+	{1.0}
+	
+	\figuremacroWH
+	{GFCCompressionTime}
+	{GFCCompressionTime}
+	{}
+	{1.0}
+	
+	\figuremacroWH
+	{TeslaCudaSortP2PUVA}
+	{TeslaCudaSortP2PUVA}
+	{}
+	{1.0}
+		
+	\figuremacroWH
+	{TeslaCudaSortP2P}
+	{TeslaCudaSortP2P}
+	{}
+	{1.0}
+	
+	\figuremacroWH
+	{TeslaCudaSortSortStages}
+	{TeslaCudaSortSortStages}
+	{}
+	{1.0}
+	
+	\figuremacroWH
+	{TeslaCudaSortStandard}
+	{TeslaCudaSortStandard}
+	{}
+	{1.0}
+	
+	\figuremacroWH
+	{TeslaCudaSortSwapStages}
+	{TeslaCudaSortSwapStages}
+	{}
+	{1.0}
 
 \bibliographystyle{plain}
 %\bibliographystyle{apalike}
