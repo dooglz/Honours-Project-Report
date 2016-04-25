@@ -2,6 +2,7 @@
 \usepackage{titlesec} %these are how we import packages, one helps set up footers and title layout
 \usepackage{fancyhdr}
 \usepackage{lipsum}
+\usepackage{float}
 % !TEX TS-program = pdflatex
 % !TEX encoding = UTF-8 Unicode
 \usepackage[utf8]{inputenc} % set input encoding (not needed with XeLaTeX)
@@ -38,6 +39,22 @@
 		\centering
 		\includegraphics[width=#4\columnwidth]{#1}
 		\caption[#2]{\textbf{#2} - #3}
+		\label{fig:#1}
+	\end{figure}
+}
+\newcommand{\figuremacroWHHN}[3]{
+	\begin{figure}[H] %[htbp]
+		\centering
+		\includegraphics[width=#3\columnwidth]{#1}
+		\caption[#2]{\textbf{#2}}
+		\label{fig:#1}
+	\end{figure}
+}
+\newcommand{\figuremacroWHN}[3]{
+	\begin{figure}[h!] %[htbp]
+		\centering
+		\includegraphics[width=#3\columnwidth]{#1}
+		\caption[#2]{\textbf{#2}}
 		\label{fig:#1}
 	\end{figure}
 }
@@ -492,84 +509,108 @@ GPUs can decode Compressed texture formats quickly, and transferring the compres
 While these algorithms in theory should be well suited to GPU architecture for encoding, this is a task that has not been commonly attempted. This project ran into difficulties getting an S3TC compressor working in CUDA, and  unfortunately this feature set had to be cut from the final results. 
 
 \section{Results}
-	\figuremacroWH
-	{BitCompressRatio}
-	{BitCompressRatio}
-	{}
-	{1.0}
 
-	
-	\figuremacroWH
-	{BitCompressTime}
-	{BitCompressTime}
-	{}
-	{1.0}
-	
-	\figuremacroWH
-	{CUDADataTransfer}
-	{CUDADataTransfer}
-	{}
-	{1.0}
-	
-	\figuremacroWH
-	{cudagpusort}
-	{cudagpusort}
-	{}
-	{1.0}
-	
-	\figuremacroWH
-	{DataTransferCudaUVAVSOpenCL}
-	{DataTransferCudaUVAVSOpenCL}
-	{}
-	{1.0}
-	
-	\figuremacroWH
-	{GFCcompressionRatio}
-	{GFCcompressionRatio}
-	{}
-	{1.0}
-	
-	\figuremacroWH
-	{GFCCompressionSpeedupvsDataSize}
-	{GFCCompressionSpeedupvsDataSize}
-	{}
-	{1.0}
-	
-	\figuremacroWH
-	{GFCCompressionTime}
-	{GFCCompressionTime}
-	{}
-	{1.0}
-	
-	\figuremacroWH
-	{TeslaCudaSortP2PUVA}
-	{TeslaCudaSortP2PUVA}
-	{}
-	{1.0}
-		
-	\figuremacroWH
-	{TeslaCudaSortP2P}
-	{TeslaCudaSortP2P}
-	{}
-	{1.0}
-	
-	\figuremacroWH
-	{TeslaCudaSortSortStages}
-	{TeslaCudaSortSortStages}
-	{}
-	{1.0}
-	
-	\figuremacroWH
-	{TeslaCudaSortStandard}
-	{TeslaCudaSortStandard}
-	{}
-	{1.0}
-	
-	\figuremacroWH
-	{TeslaCudaSortSwapStages}
-	{TeslaCudaSortSwapStages}
-	{}
-	{1.0}
+\subsection{Data Transfer}
+
+\figuremacroWHN
+{DataTransferCudaUVAVSOpenCL}
+{Data Transfer: Cuda Vs OpenCL}
+{1.0}
+As previously mentioned, the difference between Cuda and OpenCL for transferring data is significant. This data (Figure \ref{fig:DataTransferCudaUVAVSOpenCL}) was recorded by sending data back and forth between two cards, and then taking the average time. 
+Asserting that data is actually resident on a GPU is difficult with OpneCL as the driver is in charge of distributing data. 
+Therefore a simple program has to be launched on each gpu which accesses the data to assure the data is in place.
+Ideally, the setup and running time of this program would not be included in the measured time, however there does not exit a way of accurately splitting this timing data from the transfer time so it was left in. 
+To keep the test fair, a simple data program was also implemented into the cuda test and included in the timing data.
+
+\figuremacroWHHN
+{TeslaCudaSortStandard}
+{Cuda Sort}
+{1.0}
+
+Figure \ref{fig:TeslaCudaSortStandard} shows the results from running the parallel bionic sort. The sort data is the combined sum of all the sort stage running times, the same for swap. 
+The swap time is mostly unaffected by the data size when compared to the sort time, which grows exponentially with the data size which is to be expected. 
+This data shows that for a standard computational task which requires two gpus, the transfer time is probably sufficient. 
+
+\figuremacroWHHN
+{TeslaCudaSortP2P}
+{Cuda Sort P2P}
+{1.0}
+
+Figure \ref{fig:TeslaCudaSortP2P} shows the same sort test as figure \ref{fig:TeslaCudaSortStandard}, but with using the Peer to peer data transfer mode, which allows data to be transferred over the PCI bus directly between cards.
+There is a noticeable and significant increase in transfer times, especially at the higher data sizes.
+\clearpage
+\figuremacroWHHN
+{TeslaCudaSortP2PUVA}
+{Cuda Sort P2P+UVA}
+{1.0}
+
+Figure \ref{fig:TeslaCudaSortP2PUVA} shows similar data to  \ref{fig:TeslaCudaSortP2P}, but with Unified Virtual addressing enabled. Thsi is mainly a software optimisation and doesn't result in much of a noticeable increase in transfer times, there is however a small boost to sort performance.
+\clearpage
+
+\figuremacroWHHN
+{TeslaCudaSortSortStages}
+{Cuda Sort Comparison of Sort Stages}
+{1.0}
+
+Figure \ref{fig:TeslaCudaSortSortStages} combines the sort stages together for comparison. there is very little difference, other than both P2P and UVA always have a slight lead.
+
+\figuremacroWHHN
+{TeslaCudaSortSwapStages}
+{Cuda Sort Comparison of Swap Stages}
+{1.0}
+
+Figure \ref{fig:TeslaCudaSortSwapStages} combines the transfer stages together for comparison. Here the benefit of the P2P and UVA modes can clearly be seen, although only after the data size increase above 1024 bytes.
+UVA always has a slight advantage over P2P.
+
+\figuremacroWHHN
+{CUDADataTransfer}
+{Transfer Time for different Cuda Data Modes}
+{1.0}
+
+Figure \ref{fig:CUDADataTransfer} analyses the different transfer modes unter a pure data transfer test, similar to figure \ref{fig:DataTransferCudaUVAVSOpenCL}. This reinforces the finding form the sort tests and shows a clear speedup when using the more advanced transfer modes, furthermore UVA has a much more pronounced advantage. This is probably due to inefficiencies within the driver when dealing with data swaps.
+
+\figuremacroWHHN
+{cudagpusort}
+{Cuda Parallel Sort vs Sequential Sort}
+{1.0}
+
+Figure \ref{fig:cudagpusort} compares running the parallel sort against a sequential version of the sort. Although the sequential sort has to deal with double the amount of data to sort, 
+it does not have to deal with multiple sort and swap stages.
+\clearpage
+
+\subsection{Compression}
+\figuremacroWHN
+{BitCompressRatio}
+{Compression Ratio of the Bit Reducer Compressor}
+{1.0}
+
+Figure \ref{fig:BitCompressRatio} displays the ratio achieved for different data sizes for the Bit reducer compressor. The ratio depends on the data contents, with lower numbers producing better compression. This input data used was random numbers, so the compression ratio does not convey much correlation to data size.
+
+\figuremacroWHHN
+{BitCompressTime}
+{Compression Time of the Bit Reducer Compressor}
+{1.0}
+
+Figure \ref{fig:BitCompressTime} shows the total time to compress the data, this shows the linear nature of the algorithm. Although the time does correlate well with the data size, with a minimum time to compress of 100 milliseconds, this algorithm is limited in it's use.
+\clearpage
+\figuremacroWHN
+{GFCcompressionRatio}
+{Compression Ratio of the GFC Compressor}
+{1.0}
+
+Figure \ref{fig:GFCcompressionRatio} displays the compression ratio archived via the GFC compressor. The algorithm does not become effective until the data size increases above 8192, this is due to the design and overhead of the algorithm. As the data size increase, the compression ratio improves, unfortunately the size limitations of GPU memory prevented additional data sizes being tested to see when/if the ratio levels out.
+
+\figuremacroWHN
+{GFCCompressionTime}
+{Compression Time of the GFC Compressor}
+{1.0}
+
+\figuremacroWHN
+{GFCCompressionSpeedupvsDataSize}
+{Compression Speedup}
+{1.0}
+
+
 
 \bibliographystyle{plain}
 %\bibliographystyle{apalike}
