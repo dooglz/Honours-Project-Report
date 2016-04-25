@@ -592,7 +592,7 @@ Figure \ref{fig:BitCompressRatio} displays the ratio achieved for different data
 {1.0}
 
 Figure \ref{fig:BitCompressTime} shows the total time to compress the data, this shows the linear nature of the algorithm. Although the time does correlate well with the data size, with a minimum time to compress of 100 milliseconds, this algorithm is limited in it's use.
-\clearpage
+
 \figuremacroWHN
 {GFCcompressionRatio}
 {Compression Ratio of the GFC Compressor}
@@ -605,12 +605,14 @@ Figure \ref{fig:GFCcompressionRatio} displays the compression ratio archived via
 {Compression Time of the GFC Compressor}
 {1.0}
 
+Figure \ref{fig:GFCCompressionTime} Shows the time taken to compress data with GFC. As seen in the previous figure, anomalous data occurs before the data size increase above 8192. The compression time then increase somewhat linearly to the data size, the overall time is significantly less than the Bit Reducer compression.
+
 \figuremacroWHN
 {GFCCompressionSpeedupvsDataSize}
 {Compression Speedup}
 {1.0}
 
-
+Figure \ref{fig:GFCCompressionSpeedupvsDataSize} is the most significant dataset produced, it shows taht speedup would be gained by compressing the data with GFC before transmission over transmitting the whole data uncompressed. This is a theoretical data based only on the compression and projected transmission times, as converting from the output format of GFC to data that could be sent and received would take additional time. This does however show that there is potentially enough compute power and API support to justify compression before transmission with high data volumes.
 
 \bibliographystyle{plain}
 %\bibliographystyle{apalike}
