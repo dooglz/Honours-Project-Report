@@ -546,10 +546,10 @@ This data shows that for a standard computational task which requires two gpus, 
 {TeslaCudaSortP2P}
 {Cuda Sort P2P}
 {1.0}
-
+\clearpage
 Figure \ref{fig:TeslaCudaSortP2P} shows the same sort test as figure \ref{fig:TeslaCudaSortStandard}, but with using the Peer to peer data transfer mode, which allows data to be transferred over the PCI bus directly between cards.
 There is a noticeable and significant increase in transfer times, especially at the higher data sizes.
-\clearpage
+
 \figuremacroWHHN
 {TeslaCudaSortP2PUVA}
 {Cuda Sort P2P+UVA}
@@ -624,6 +624,17 @@ Figure \ref{fig:GFCCompressionTime} Shows the time taken to compress data with G
 {1.0}
 
 Figure \ref{fig:GFCCompressionSpeedupvsDataSize} is the most significant dataset produced, it shows taht speedup would be gained by compressing the data with GFC before transmission over transmitting the whole data uncompressed. This is a theoretical data based only on the compression and projected transmission times, as converting from the output format of GFC to data that could be sent and received would take additional time. This does however show that there is potentially enough compute power and API support to justify compression before transmission with high data volumes.
+
+\section{Analysis}
+The limitations of the high
+
+\section{Conclusion}
+The raw computational power of modern GPUs is certainly capable of being used for background tasks to increase performance in other application areas. However the design choices taken by hardware and software vendors up to now have been to optimise GPUs for their primary market use-case, video games. 
+General Purpose Computing and lower level graphics APIs are pushing the design of GPUS to be able to handle a greater range of tasks, but the current driver and hardware legacy ecosystem is an obstacle that needs to be overcome. This can be achieved in software in the short term, but in the long term hardware needs to be changed to allow for more control logic to be executed on the GPU.
+
+The vast difference that more optimised driver code can make is clearly shown in the tests which compare OpenCL against Cuda. Opencl does not give the application developer the same degree of access to device state and memory that Cuda does, primarily because OpenCL has to remain at a high level for heterogeneous device support. This does not mean that a multi-platform Compute framework could not achieve Cuda like performance, but it would have a radically different design to what OpenCL has now. 
+
+The new Graphics APIs (especially Vulkan), show that multi-platform device-agnostic low level programming could be possible. This is a case of providing much more metadata to the driver, which will allso do significantly less validation and management work. This will create less stable code, but the
 
 \bibliographystyle{plain}
 %\bibliographystyle{apalike}
