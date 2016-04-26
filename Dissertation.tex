@@ -21,6 +21,8 @@
 \usepackage[toc,page]{appendix}
 % These packages are all incorporated in the memoir class to one degree or another...
 
+\usepackage{pdfpages}
+
 %header and footer settings
 \pagestyle{fancyplain}
 \fancyhf{}
@@ -33,6 +35,11 @@
 \fancyfoot[L]{\leftmark}
 \fancyfoot[C]{\thepage}
 \graphicspath{{./images/}}
+
+\newcommand\invisiblesection[1]{%
+	\refstepcounter{section}%
+	\addcontentsline{toc}{section}{\protect\numberline{\thesection}#1}%
+	\sectionmark{#1}}
 
 \newcommand{\figuremacroW}[4]{
 	\begin{figure}[h] %[htbp]
@@ -620,22 +627,15 @@ Figure \ref{fig:GFCCompressionSpeedupvsDataSize} is the most significant dataset
 
 \newpage
 \begin{appendices}
-\section{Project Overview}
-%insert IPO
+\invisiblesection{Initial Project Overview}
+\includepdf[pages=-,scale=.92,offset=0 -0.5cm,pagecommand={\thispagestyle{plain}}]{ipo.pdf}
 
-\begin{subappendices}
-\subsection{Example sub appendices}
-...
-\end{subappendices}
+\invisiblesection{Week 9 Report}
+\includepdf[pages=-,scale=.92,offset=0 -0.5cm,pagecommand={\thispagestyle{plain}}]{Week9Report.pdf}
 
-\section{Second Formal Review Output}
-Insert a copy of the project review form you were given at the end of the review by the second marker
+\invisiblesection{Diary Sheets}
+\includepdf[pages=-,pagecommand={\thispagestyle{plain}}]{ProjectDiary.pdf}
 
-\section{Diary Sheets (or other project management evidence)}
-Insert diary sheets here together with any project management plan you have
-
-\section{Appendix 4 and following}
-insert content here and for each of the other appendices, the title may be just on a page by itself, the pages of the appendices are not numbered, unless an included document such as a user manual or design document is itself pager numbered.
 \end{appendices}
 
 \end{document}
