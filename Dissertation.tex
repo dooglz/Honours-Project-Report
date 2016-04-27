@@ -65,6 +65,15 @@
 		\label{fig:#1}
 	\end{figure}
 }
+
+\newcommand{\figuremacroWHH}[4]{
+	\begin{figure}[H] %[htbp]
+		\centering
+		\includegraphics[width=#4\columnwidth]{#1}
+		\caption[#2]{\textbf{#2} - #3}
+		\label{fig:#1}
+	\end{figure}
+}
 \newcommand{\figuremacroWH}[4]{
 	\begin{figure}[h!] %[htbp]
 		\centering
@@ -407,6 +416,13 @@ A single run of a test may have many separate steps that need to be timed separa
 Visualising an entire algorithm comprised of many steps required creating a new tool to show an overview of a test compared with another. The objective was to have the ability to compare individual steps of an algorithm rather than just the summed run time. This was implemented as a web app in JavaScript using the D3.js visualization framework. Result CSV could be uploaded to the site and would be added to the list of results to view, this was scripted to happen automatically on the Tesla server.
 A limitation of the tool is that it can not display two result sets if they have a different number of steps, different solutions to visualize this were tried but ultimately it always resulted in an unclear display. 
 
+\figuremacroWHH
+{resvisdx12}
+{Result Visualiser}
+{Showing different versions of a DX12 parallel sort, during optimisation testing}
+{1.0}
+
+
 \subsection{Inter-Gpu Communication}
 \blockquote[\cite{amdoclguide}]{Discrete GPUs use dedicated high-bandwidth memory that exists in a separate address space. Moving data between the device address space and the host requires time-consuming transfers over a relatively slow PCI-Express bus.
 }
@@ -445,6 +461,7 @@ On high-end Tesla compute cards, Unified Virtual Addressing (UVA) technology is 
 \subsubsection{DirectX 12}
 The ability to use DirectX 12 became available midway through the project. DX12 has the ability to dispatch commands and data to specific GPUS. The major issue with Using DX12 at this time was that the drivers and documentation was still in a very early state. A working implementation that moved data from one GPU to another was implemented, however the results were not nearly as good as using Cuda. 
 As DX12 is a full graphics API, integrating the data transfer into a games/graphics pipeline would be much simpler than with Cuda or OpenCL. As driver support and performance improves over time this method may become viable to integrate into a product, at the moment it only serves as a proof of concept that multi-GPU transfers can be done.
+
 
 
 \subsection{Gpu Compression}
@@ -589,6 +606,19 @@ Figure \ref{fig:cudagpusort} compares running the parallel sort against a sequen
 it does not have to deal with multiple sort and swap stages.
 \clearpage
 
+\figuremacroWHHN
+{dx12sortTime}
+{DX12 Sort, Comparison of Sort Stages}
+{1.0}
+\figuremacroWHHN
+{dx12swap}
+{DX12 Sort, Comparison of Swap Stages}
+{1.0}
+
+Figures \ref{fig:dx12sortTime} and \ref{fig:dx12swap} show the results of running the standard parallel bionic sort using the DirectX 12 API. The sort time correlates typically with the data size however the magnitude of the results is significantly higher than Cuda and OpenCL.
+The swap results follow a similar pattern but level out after 16384 bytes, this is a good example of behind the scenes behaviours and optimisations that only activate after certain undocumented parameters are met.
+
+\clearpage
 \subsection{Compression}
 \figuremacroWHN
 {BitCompressRatio}
@@ -632,9 +662,22 @@ The limitations of the high
 The raw computational power of modern GPUs is certainly capable of being used for background tasks to increase performance in other application areas. However the design choices taken by hardware and software vendors up to now have been to optimise GPUs for their primary market use-case, video games. 
 General Purpose Computing and lower level graphics APIs are pushing the design of GPUS to be able to handle a greater range of tasks, but the current driver and hardware legacy ecosystem is an obstacle that needs to be overcome. This can be achieved in software in the short term, but in the long term hardware needs to be changed to allow for more control logic to be executed on the GPU.
 
+This investigation focused on transferring data between GPUS, measuring the throughput and analysing the steps involved in initiating transfers from APIs
+
+\subsection{Software}
 The vast difference that more optimised driver code can make is clearly shown in the tests which compare OpenCL against Cuda. Opencl does not give the application developer the same degree of access to device state and memory that Cuda does, primarily because OpenCL has to remain at a high level for heterogeneous device support. This does not mean that a multi-platform Compute framework could not achieve Cuda like performance, but it would have a radically different design to what OpenCL has now. 
 
-The new Graphics APIs (especially Vulkan), show that multi-platform device-agnostic low level programming could be possible. This is a case of providing much more metadata to the driver, which will allso do significantly less validation and management work. This will create less stable code, but the
+The new Graphics APIs (especially Vulkan), show that multi-platform device-agnostic low level programming could be possible. This is a case of providing much more metadata to the driver, which will allso do significantly less validation and management work. This will has the potential for creating less stable applications, but the performance benefits of doing so could be well worth the trade-off. This speculation is based on the performance delta between the two GPU APIs tested, this does not assume that Cuda is as fast as Compute APIs can get, as the total throughput values seen were far from the theoretical maximum of the transfer medium. 
+
+CPU synchronisation and intervention is the biggest obstacle standing in the way of running non-standard tasks sets on the GPU. The GPU was designed to take a large data sets and perform simple operations on it and then return. Channing jobs together (even if each job is optimised for the hardware and relies only on the data from the previous job), is a costly operation and will likely require CPU synchronisation. Cuda streams vastly improve job chaining by moving the logic out of the application code but does not completely remove the CPU from the loop.
+
+Dynamic parallelism (Kernels launching Kernels) and data pipes (low-overhead passing of data to proceeding kernels) are methods available in the newer OpenCL and Cuda standards, which can improve process which are made of up multiple kernel stages. However if anything more than completely basic logic is needed to redirect data or launch new kernels, this must be done on the CPU. These are optimisations within compute APIs that do deliver significant performance increase when used correctly; doing so requires designing the entire application with this in mind. Essentially this does not translate well when moving to higher level Compute Apis, or to Graphics APIs which will have entirely different constructs.
+
+Ultimately OpenCL and Cuda can and will continue to offer new methods that unlock previously unusable device capabilities, this is good news for GPGPU applications, but it is the large conceptual API design changes that will effect all GPU use-cases for the better. If more high-level management logic can be moved to the GPU, and away from the CPU, application programmers can write code that makes much better use of the available resources. A balance must be stuck here, between low-level access and verbose programs, versus more compatible and simpler code. It is the conclusion of this report that the application programmer should be able to choose where their application will be in the scale, and at the moment the available APIs do not provide this choice.
+
+\subsection{Hardware}
+
+\subsection{Final Thoughts}
 
 \bibliographystyle{plain}
 %\bibliographystyle{apalike}
