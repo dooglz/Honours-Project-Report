@@ -13,3 +13,5 @@
 **/*.nlo
 **/*.lof
 **/*.lot
+Dissertation.run.xml
+Dissertation-blx.bib

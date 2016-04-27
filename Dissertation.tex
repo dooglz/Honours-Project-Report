@@ -249,6 +249,11 @@ For using  a GPU for general purpose programming, the majority of the features i
 \\
 There are now two main APIs for GPGPU programming, OpenCL and Cuda, they both can operate a GPU independently and can also interoperate with rendering APIs.
 
+\figuremacroWHHN
+{clvscudaov}
+{OpenCl vs Cuda \cite{6419068}}
+{0.8}
+
 \paragraph{OpenCL}
 OpenCL is very similar to OpenGL, but lacking the rendering commands. It is also entirely a reference specification with no supplied implementation. OpenCL has implementations on most of the common GPU hardware.
 
@@ -305,32 +310,20 @@ These constructs can be saved  reused to cut down on the amount of state changes
 \subsubsection{Vulkan}
 Vulkan is the successor to OpenGL, authored by the Khronos group, it shares many of the same advances as DirectX 12. The major advantage that Vulkan has over OpenGL is the removal of legacy items and a general cleanup in the specification, in addition of new low-level features. Vulkan still remains a crossplatform API, including mobile platforms, which is a difficult task for a low-level device-agnostic API. The release came with a major push towards increasing tool quality and conformance testing to break away from the main issues that plagued OpenGL; compatibility issues and implementations not following the specification completely.
 
-\subsubsection{Mantle}
-Starting point for vulkan, now deprecated.
-
-\subsubsection{Metal}
-Apple’s version of vulkan for mobile devices
-
 \subsubsection{The place of new the rendering APIs }
 At the time of this report both, Vulkan and DirectX 12 are still brand new, industry adoption is looking positive but only time will tell. With the new capabilities of these low-level APIs comes substantially more work for the developer if they wish to make full use of everything the specification provides. Part of the motivation and inspiration for these APIs has come from the games console industry, wherein the developer has virtually full control over the hardware. As every console uses the same hardware and operating firmware, developers can use highly specific operations to achieve the greatest performance. With Vulkan and Directx 12 aiming to bring these benefits to a wide range of hardware and software platforms, compatibility testing is going to become critical and hardware vendors are going to have to make sure that their provided drivers adhere completely to the API specification on all devices. In summary, these new APIs unlock a large degree of potential performance, but require a large amount of careful work to use it. Tools, game engines, and library support will make things easier in time, but the full use case an adoption compared with the older more-usable APIs is yet to be determined. 
 
 \subsection{Multi-GPU Use for Graphics and Gaming}
 Computer systems with more than one GPU was once only an area for gaming enthusiasts, it is now becoming more commonplace with many professional tools making use of GPGPU acceleration and the higher demands of the emerging Virtual Reality technologies.  Until recently it has not been possible to control more than one GPU in a single rendering/graphics application, the distribution of work between GPUs is the responsibility of the hardware driver. This has the benefit of abstraction for the developer who can gain extra performance without changing any code, with the downside that the performance gain is limited as the driver can only use generic algorithms, and does not have knowledge of the program code.
+
+As the driver could not alter the order or timing of the incoming graphics commands from the application, the only option to increase performance is to duplicate all instructions and data across all cards in use.
+
 It is also common for modern CPUs to have a low-power on-chip GPU, paired with a separate higher power and faster GPU, this is used in laptops to reduce power usage by disabling the high power GPU when not needed.
 It has also not been possible to use the CPU GPU and a separate GPU together in one application, until now.
 
-SLI: As the driver could not alter the order or timing of the incoming graphics commands from the application, the best option to increase performance was to duplicate all instructions and data across all cards and use 
-
- \blockquote[\cite{amdoclguide}]{The explicit API outstrips what today’s hardware is capable of. Compared to on-board memory, any operations taking place over PCI Express are relatively slow and high latency. Some GPUs in turn handle this better than others, but at the end of the day the PCIe bus is still a bottleneck at a fraction of the speed of local memory. That means while GPUs can work together, they must do so intelligently, as we’re not yet at the point where GPUs can quickly transfer large amounts of data from each other.}
 
 
-\subsection{GPU and Multi-GPU Use for General Purpose Computing}
-
-\subsection{GPU Data Communication}
-
-\subsection{Data Compression}
-
-\subsubsection{Parallel Data Compression}
+ \blockquote[\cite{amdoclguide}]{"The explicit API outstrips what today’s hardware is capable of. Compared to on-board memory, any operations taking place over PCI Express are relatively slow and high latency. Some GPUs in turn handle this better than others, but at the end of the day the PCIe bus is still a bottleneck at a fraction of the speed of local memory. That means while GPUs can work together, they must do so intelligently, as we’re not yet at the point where GPUs can quickly transfer large amounts of data from each other."}
 
 \section{Implementation}
 \subsection{Plan}
@@ -440,12 +433,12 @@ A limitation of the tool is that it can not display two result sets if they have
 
 \subsubsection{OpenCL}
 OpenCL was chosen as the first technology to be analysed, this was due to OpenCL’s wide range of support platforms and therefore any advances made would have the greatest area for application. The address space of the GPU is not directly or even indirectly accessible from the application on the CPU.
-The application can create “buffers” to store data, GPU kernels can access the data in these buffers when executing, so they must be copied to the GPU. The application has no control over this (with one exception, explained later), it is completely up to the driver to identify when data would be needed on a gpu and initiate the copy.
+The application can create “buffers” to store data, GPU kernels can access the data in these buffers when executing, so they must be copied to the GPU. The application has no control over this (with one exception, explained later), it is completely up to the driver to identify when data would be needed on a GPU and initiate the copy.
 \blockquote[\cite{amdoclguide}]{An OpenCL context can have multiple devices, and a memory object that is located on a device has a location on each device. To avoid over-allocating device memory for memory objects that are never used on that device, space is not allocated until first used on a device-by-device basis. For this reason, the first use of a memory object after it is created can be slower than subsequent uses
 }
 Optimisations can be done to ensure the copy is as fast as possible, by using “Pinned Memory” which is memory that is guaranteed to be in a static contiguous location within Main Memory. This allows the GPU to use a DMA transfer to quickly receive or transmit data to the CPU. However this is only a speed optimisation, the application still has no control over when the transfer will happen.
 
-To transfer data from one GPU to another, they must write to and read from the same buffer. OpenCL does not provide low level cross-device/cross-queue synchronization barriers, so the application must use the GlFinish command to ensure a gpu has finished writing. This command has a significant overhead as it blocks the cpu until all current tasks on the GPU are finished, this means the cpu will be waiting for synchronization and cleanup operations to happen in addition to the kernel operations. 
+To transfer data from one GPU to another, they must write to and read from the same buffer. OpenCL does not provide low level cross-device/cross-queue synchronization barriers, so the application must use the GlFinish command to ensure a GPU has finished writing. This command has a significant overhead as it blocks the cpu until all current tasks on the GPU are finished, this means the cpu will be waiting for synchronization and cleanup operations to happen in addition to the kernel operations. 
 
 Once the application can be sure a GPU has finished writing to a buffer, it can then execute the kernels on the second GPU to read the data. Without even considering transferring data from card A to card B, the operation procedure to synchronize reading and writing has already taken a significant amount of time. 
 
@@ -481,7 +474,7 @@ Any compression algorithm that runs on the GPU must be a highly parallel in natu
 
 \subsubsection{Bit Reducer}
 To discover generic compression issues/bottlenecks and to get a baseline performance reading, a basic compression algorithm was created. The algorithm interprets data as 32bit integers and swaps swaps any leading zeroes in the binary representation with a 5 bit number representing the amount of bit removed.
-This was designed to make the best use of the parallelism of the GPU, as the data can be easily segmented into chunks of 32 bits, and each chunk can be processed independently. The difficult task is recombining the compressed chunks together as each chunk will be a separate size. This was managed by placing the size of the chunk into a shared memory location, creating a contiguous list of all chunk sizes. A single kernel will then read this list and compact the chunks together. Decompressing the data does not play to the strengths of a GPU as well as compressing, the input data has to be divided into individual chunks, this required reading sequentially through the data to pick out the size bits and data bits. Splitting the data randomly would not work as there is no way to tell a size bit from the data bits. This was remedied by adding additional data to the start of the entire data set, this contained the boundaries of a set of chunks within the output data. This data allowed the data to be divided correctly. This works well if the the compressing and decompressing gpus have the same amount of compute units and warp sizes and results in essentially a perfect reverse of the compression process with the cost of a few extra bytes of data.
+This was designed to make the best use of the parallelism of the GPU, as the data can be easily segmented into chunks of 32 bits, and each chunk can be processed independently. The difficult task is recombining the compressed chunks together as each chunk will be a separate size. This was managed by placing the size of the chunk into a shared memory location, creating a contiguous list of all chunk sizes. A single kernel will then read this list and compact the chunks together. Decompressing the data does not play to the strengths of a GPU as well as compressing, the input data has to be divided into individual chunks, this required reading sequentially through the data to pick out the size bits and data bits. Splitting the data randomly would not work as there is no way to tell a size bit from the data bits. This was remedied by adding additional data to the start of the entire data set, this contained the boundaries of a set of chunks within the output data. This data allowed the data to be divided correctly. This works well if the the compressing and decompressing GPUs have the same amount of compute units and warp sizes and results in essentially a perfect reverse of the compression process with the cost of a few extra bytes of data.
 
 \begin{table*}[h]\centering
 	\begin{tabular}{ll}\toprule
@@ -532,11 +525,10 @@ S3TC decoding has been built into the hardware design of GPUs for some time, it 
 	{dxt}
 	{S3TC, Single block}
 	{Left: Original, Right: Compressed \cite{dxtimg}}
-	{0.5}
+	{0.45}
 	
 \paragraph{ATSC}
 Adaptive Scalable Texture Compression (ATSC), is a newer compression format that combines many of the optimizations discovered by prior compression formats together to form a compression technique that provides much greater perceptive quality while remaining a small file size and fast GPU decompression. ATSC uses a block based approach, highly similar to S3TC, however the blocks do not need to be square. Each block is still a fixed size, so splitting the data for decompression is trivial. The main advances in ATSC is how the bits are allocated within each block. The allocation can be shifted depending on the contents of the block, for a block with similar colours, more data can be allocated to each pixel. For a block with multiple colours, more data can be allocated to the metadata and colour scale. With relatively small amount of bits to work with, changing the allocation would result in large changes i.e., an extra bit for each pixel would significantly reduce the remaining space for block metadata. ATSC makes use of Bounded Integer Sequence Encoding to get around this problem and gain finer control over bit allocation. BISE leverages the spare bits available of the maximum number in a range and uses this to quantise the data down to a smaller size using higher base number systems (base 3 and 5). Essentially this can the effect of allowing fractional bits for each pixel.
-
 
 \blockquote[\cite{astsinfo}]{[BISE has] a significant saving, and has the somewhat weird property of assigning a non-integer number of bits - 2.33 - to each value[pixel].}
 
@@ -558,7 +550,7 @@ While these algorithms in theory should be well suited to GPU architecture for e
 
 As previously mentioned, the difference between Cuda and OpenCL for transferring data is significant. This data (Figure \ref{fig:DataTransferCudaUVAVSOpenCL}) was recorded by sending data back and forth between two cards, and then taking the average time. 
 Asserting that data is actually resident on a GPU is difficult with OpneCL as the driver is in charge of distributing data. 
-Therefore a simple program has to be launched on each gpu which accesses the data to assure the data is in place.
+Therefore a simple program has to be launched on each GPU which accesses the data to assure the data is in place.
 Ideally, the setup and running time of this program would not be included in the measured time, however there does not exit a way of accurately splitting this timing data from the transfer time so it was left in. 
 To keep the test fair, a simple data program was also implemented into the cuda test and included in the timing data.
 
@@ -569,7 +561,7 @@ To keep the test fair, a simple data program was also implemented into the cuda 
 
 Figure \ref{fig:TeslaCudaSortStandard} shows the results from running the parallel bionic sort. The sort data is the combined sum of all the sort stage running times, the same for swap. 
 The swap time is mostly unaffected by the data size when compared to the sort time, which grows exponentially with the data size which is to be expected. 
-This data shows that for a standard computational task which requires two gpus, the transfer time is probably sufficient. 
+This data shows that for a standard computational task which requires two GPUs, the transfer time is probably sufficient. 
 
 \figuremacroWHHN
 {TeslaCudaSortP2P}
@@ -704,7 +696,6 @@ Communication between two or more GPUs is still uncharted territory, especially 
 
 \printbibliography
 
-\newpage
 \begin{appendices}
 \invisiblesection{Initial Project Overview}
 \includepdf[pages=-,scale=.92,offset=0 -0.5cm,pagecommand={\thispagestyle{plain}}]{ipo.pdf}
